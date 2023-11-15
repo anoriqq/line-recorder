@@ -4,7 +4,8 @@
   "sideEffects": false,
   "scripts": {
     "dev": "remix dev -c \"node server.mjs\"",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@remix-run/node": "^2.2.0",
