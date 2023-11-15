@@ -3,6 +3,7 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
+    "dev": "remix dev -c \"node server.mjs\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
