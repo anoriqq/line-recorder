@@ -14,6 +14,9 @@ dependencies:
   '@remix-run/serve':
     specifier: ^2.2.0
     version: 2.2.0(typescript@5.2.2)
+  isbot:
+    specifier: ^3.7.1
+    version: 3.7.1
   react:
     specifier: ^18.2.0
     version: 18.2.0
@@ -2417,6 +2420,11 @@ packages:
   /isarray@1.0.0:
     resolution: {integrity: sha512-VLghIWNM6ELQzo7zwmcg0NmTVyWKYjvIeM83yjp0wRDTmUnrM678fQbcKBo6n2CJEF0szoG//ytg+TKla89ALQ==}
     dev: true
+
+  /isbot@3.7.1:
+    resolution: {integrity: sha512-JfqOaY3O1lcWt2nc+D6Mq231CNpwZrBboLa59Go0J8hjGH+gY/Sy0CA/YLUSIScINmAVwTdJZIsOTk4PfBtRuw==}
+    engines: {node: '>=12'}
+    dev: false
 
   /isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
