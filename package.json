@@ -1,12 +1,13 @@
 {
-  "name": "line-recorder",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "$schema": "https://json.schemastore.org/package.json",
+  "private": true,
+  "sideEffects": false,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "node": ">=20.9.0"
+  }
 }
