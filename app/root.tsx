@@ -5,6 +5,7 @@ import {
   LiveReload,
   MetaFunction,
 } from "@remix-run/react";
+import { useState } from "react";
 
 export const meta: MetaFunction = () => {
   return [
@@ -20,6 +21,20 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+function Main() {
+  const [isRecording, setIsRecording] = useState(false);
+
+  const onClick = () => {
+    setIsRecording(!isRecording)
+  }
+
+  return (
+    <main>
+      <button className="rec" onClick={onClick}> {isRecording ? 'Stop' : 'Rec'} </button>
+    </main>
+  );
+}
+
 export default function App() {
   return (
     <html>
@@ -32,6 +47,8 @@ export default function App() {
         <Links />
       </head>
       <body>
+        <Main />
+
         <Scripts />
         <LiveReload />
       </body>
