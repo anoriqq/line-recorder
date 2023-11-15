@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@remix-run/express':
+    specifier: ^2.2.0
+    version: 2.2.0(express@4.18.2)(typescript@5.2.2)
   '@remix-run/node':
     specifier: ^2.2.0
     version: 2.2.0(typescript@5.2.2)
@@ -14,6 +17,9 @@ dependencies:
   '@remix-run/serve':
     specifier: ^2.2.0
     version: 2.2.0(typescript@5.2.2)
+  express:
+    specifier: ^4.18.2
+    version: 4.18.2
   isbot:
     specifier: ^3.7.1
     version: 3.7.1
