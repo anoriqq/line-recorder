@@ -101,11 +101,11 @@ function Main() {
         )}
       </div>
       <div>
-        { audioURLs.map((url, i) => (
+        {audioURLs.map((url, i) => (
           <div key={i}>
             <audio src={url} controls />
           </div>
-        )) }
+        ))}
       </div>
     </main>
   );
