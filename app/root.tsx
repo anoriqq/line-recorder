@@ -29,19 +29,18 @@ const constraints = {
   video: false,
 }
 
-function Main() {
-  const [stream, setStream] = useState<MediaStream|null>(null)
+function Welcome({onClick}: {onClick: () => void}) {
+  return (
+    <div>
+      <h1>Line Recorder</h1>
+      <p>This app is record your voice.</p>
+      <p>Click the button below to get mic permission.</p>
+      <button onClick={onClick}>Get Mic Permission</button>
+    </div>
+  )
+}
 
-  const handleGetMicPermission = async () => {
-    navigator.mediaDevices.getUserMedia(constraints)
-    .then((stream) => {
-      setStream(stream)
-    })
-    .catch((err) => {
-      console.error(err)
-    })
-  }
-
+function Recorder({stream}: {stream: MediaStream}) {
   const mediaRecorderRef = useRef<MediaRecorder|null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const [audioURLs, setAudioURLs] = useState<string[]>([])
@@ -89,16 +88,10 @@ function Main() {
   }
 
   return (
-    <main>
+    <div>
       <div>
-        {stream === null ? (
-          <button onClick={handleGetMicPermission}>Get Mic Permission</button>
-        ) : (
-          <>
-            <button onClick={handleStart}>Start</button>
-            <button onClick={handleStop}>Stop</button>
-          </>
-        )}
+        <button onClick={handleStart}>Start</button>
+        <button onClick={handleStop}>Stop</button>
       </div>
       <div>
         {audioURLs.map((url, i) => (
@@ -106,6 +99,32 @@ function Main() {
             <audio src={url} controls />
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+
+function Main() {
+  const [stream, setStream] = useState<MediaStream|null>(null)
+
+  const handleGetMicPermission = async () => {
+    navigator.mediaDevices.getUserMedia(constraints)
+    .then((stream) => {
+      setStream(stream)
+    })
+    .catch((err) => {
+      console.error(err)
+    })
+  }
+
+  return (
+    <main>
+      <div>
+        {stream === null ? (
+          <Welcome onClick={handleGetMicPermission}/>
+        ) : (
+          <Recorder stream={stream}/>
+        )}
       </div>
     </main>
   );
