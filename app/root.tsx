@@ -61,7 +61,7 @@ type clip = {
   idx: number
   char: char
   audio: string
-  time: number
+  duration: number
   caption: string
 }
 
@@ -69,7 +69,7 @@ function Clip({clip}: {clip: clip}) {
   return (
     <div>
       <div style={{color: clip.char.color}} >{clip.char.name}</div>
-      <div>{clip.time}</div>
+      <div>{clip.duration}</div>
       <div>{clip.caption}</div>
       <audio src={clip.audio} controls />
     </div>
@@ -117,7 +117,7 @@ function Char({char, stream, handleAddClip, recordingCharID, setRecordingCharID}
       idx: 0,
       char: char,
       audio: url,
-      time: 0,
+      duration: 0,
       caption: 'Hello',
     })
   }
