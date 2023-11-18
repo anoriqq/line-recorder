@@ -66,12 +66,25 @@ type clip = {
 }
 
 function Clip({clip}: {clip: clip}) {
+  const audioRef = useRef<HTMLAudioElement|null>(null)
+
+  const handleOnClick = () => {
+    if (audioRef.current === null) {
+      return
+    }
+    if (audioRef.current.paused) {
+      audioRef.current.play()
+    } else {
+      audioRef.current.pause()
+    }
+  }
+
   return (
-    <div>
+    <div onClick={handleOnClick}>
+      <audio ref={audioRef} src={clip.audio} />
       <div style={{color: clip.char.color}} >
         <span>{clip.char.name} {clip.duration}s {clip.caption}</span>
       </div>
-      <audio src={clip.audio} />
     </div>
   )
 }
