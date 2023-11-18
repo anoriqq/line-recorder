@@ -68,10 +68,10 @@ type clip = {
 function Clip({clip}: {clip: clip}) {
   return (
     <div>
-      <div style={{color: clip.char.color}} >{clip.char.name}</div>
-      <div>{clip.duration}</div>
-      <div>{clip.caption}</div>
-      <audio src={clip.audio} controls />
+      <div style={{color: clip.char.color}} >
+        <span>{clip.char.name} {clip.duration}s {clip.caption}</span>
+      </div>
+      <audio src={clip.audio} />
     </div>
   )
 }
@@ -117,7 +117,7 @@ function Char({char, stream, handleAddClip, recordingCharID, setRecordingCharID}
       idx: 0,
       char: char,
       audio: url,
-      duration: 0,
+      duration: Math.random(),
       caption: 'Hello',
     })
   }
@@ -169,7 +169,7 @@ function CharPad({chars, stream, handleAddClip}: {chars: char[], stream: MediaSt
   const [recordingCharID, setRecordingCharID] = useState<string>('')
 
   return (
-    <div>
+    <div style={{backgroundColor:"#EEE"}}>
       {chars.map((char) => (
         <Char
           key={char.id}
