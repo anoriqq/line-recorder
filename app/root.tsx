@@ -86,7 +86,15 @@ function Timeline({clips}: {clips: clip[]}) {
   )
 }
 
-function Char({char, stream, handleAddClip}: {char: char, stream: MediaStream, handleAddClip: (clip: clip) => void}) {
+type CharProps = {
+  char: char
+  stream: MediaStream
+  handleAddClip: (clip: clip) => void
+  recordingCharID: string
+  setRecordingCharID: (recordingCarID: string) => void
+}
+
+function Char({char, stream, handleAddClip, recordingCharID, setRecordingCharID}: CharProps) {
   const mediaRecorderRef = useRef<MediaRecorder|null>(null)
   const audioChunksRef = useRef<Blob[]>([])
 
@@ -114,15 +122,13 @@ function Char({char, stream, handleAddClip}: {char: char, stream: MediaStream, h
     })
   }
 
-  const [isRecording, setIsRecording] = useState<boolean>(false)
-
   const handleClick = () => {
-    if (isRecording) {
+    if (recordingCharID === char.id) {
       handleStop()
-      setIsRecording(false)
-    } else {
+      setRecordingCharID('')
+    } else if (recordingCharID === '') {
       handleStart()
-      setIsRecording(true)
+      setRecordingCharID(char.id)
     }
   }
 
@@ -154,16 +160,25 @@ function Char({char, stream, handleAddClip}: {char: char, stream: MediaStream, h
   return (
     <div onClick={handleClick}>
       <span style={{color: char.color}}>{char.name}</span>
-      <span>{isRecording ? ' RECORDING...' : ''}</span>
+      <span>{recordingCharID === char.id ? ' RECORDING...' : ''}</span>
     </div>
   )
 }
 
 function CharPad({chars, stream, handleAddClip}: {chars: char[], stream: MediaStream, handleAddClip: (clip: clip) => void}) {
+  const [recordingCharID, setRecordingCharID] = useState<string>('')
+
   return (
     <div>
       {chars.map((char) => (
-        <Char key={char.id} char={char} stream={stream} handleAddClip={handleAddClip} />
+        <Char
+          key={char.id}
+          char={char}
+          stream={stream}
+          handleAddClip={handleAddClip}
+          recordingCharID={recordingCharID}
+          setRecordingCharID={setRecordingCharID}
+        />
       ))}
     </div>
   )
