@@ -60,13 +60,13 @@ type clip = {
   id: string
   idx: number
   char: char
-  audio: string
-  duration: number
+  audioURL: string
+  durationS: number
   caption: string
 }
 
 function Clip({clip}: {clip: clip}) {
-  const audioRef = useRef<HTMLAudioElement|null>(null)
+  const audioRef = useRef<HTMLAudioElement>(null)
 
   const handleOnClick = () => {
     if (audioRef.current === null) {
@@ -81,9 +81,9 @@ function Clip({clip}: {clip: clip}) {
 
   return (
     <div onClick={handleOnClick}>
-      <audio ref={audioRef} src={clip.audio} />
+      <audio src={clip.audioURL} ref={audioRef} />
       <div style={{color: clip.char.color}} >
-        <span>{clip.char.name} {clip.duration}s {clip.caption}</span>
+        <span>{clip.char.name} {clip.durationS}s {clip.caption}</span>
       </div>
     </div>
   )
@@ -111,6 +111,13 @@ function Char({char, stream, handleAddClip, recordingCharID, setRecordingCharID}
   const mediaRecorderRef = useRef<MediaRecorder|null>(null)
   const audioChunksRef = useRef<Blob[]>([])
 
+  // HTMLAudioElement.duration から値が取れないケースがあるので自前で計算する
+  const recordStartTimestampRef = useRef<number>(0) 
+
+  const startListener = () => {
+    recordStartTimestampRef.current = Date.now()
+  }
+
   const dataavailableListener = (event: BlobEvent) => {
       if (typeof event.data === 'undefined') {
         return
@@ -124,15 +131,19 @@ function Char({char, stream, handleAddClip, recordingCharID, setRecordingCharID}
   const stopListener = () => {
     const blob = new Blob(audioChunksRef.current)
     audioChunksRef.current = []
-    const url = URL.createObjectURL(blob)
-    handleAddClip({
+
+    const duration = Math.floor((Date.now() - recordStartTimestampRef.current ) / 1000)
+    recordStartTimestampRef.current = 0
+
+    const clip: clip = {
       id: Math.random().toString(),
       idx: 0,
       char: char,
-      audio: url,
-      duration: Math.random(),
+      audioURL: URL.createObjectURL(blob),
+      durationS: duration,
       caption: 'Hello',
-    })
+    }
+    handleAddClip(clip)
   }
 
   const handleClick = () => {
@@ -153,6 +164,7 @@ function Char({char, stream, handleAddClip, recordingCharID, setRecordingCharID}
       mediaRecorderRef.current = new MediaRecorder(stream)
       mediaRecorderRef.current.addEventListener('dataavailable', dataavailableListener)
       mediaRecorderRef.current.addEventListener('stop', stopListener)
+      mediaRecorderRef.current.addEventListener('start', startListener)
     }
     if (mediaRecorderRef.current.state === 'recording') {
       return
