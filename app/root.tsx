@@ -250,13 +250,11 @@ function Main() {
 
   return (
     <main>
-      <div>
-        {stream === null ? (
-          <Welcome onClick={handleGetMicPermission} />
-        ) : (
-          <Recorder stream={stream} />
-        )}
-      </div>
+      {stream === null ? (
+        <Welcome onClick={handleGetMicPermission} />
+      ) : (
+        <Recorder stream={stream} />
+      )}
     </main>
   );
 }
