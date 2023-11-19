@@ -190,7 +190,13 @@ function Char({char, stream, handleAddClip, recordingCharID, setRecordingCharID}
   )
 }
 
-function CharPad({chars, stream, handleAddClip}: {chars: char[], stream: MediaStream, handleAddClip: (clip: clip) => void}) {
+type CharPadProps = {
+  chars: char[]
+  stream: MediaStream
+  handleAddClip: (clip: clip) => void
+}
+
+function CharPad({chars, stream, handleAddClip}: CharPadProps) {
   const [recordingCharID, setRecordingCharID] = useState<string>('')
 
   return (
