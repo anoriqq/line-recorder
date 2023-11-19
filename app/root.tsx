@@ -58,30 +58,15 @@ const dummyChars: char[] = [
 
 type clip = {
   id: string
-  idx: number
   char: char
-  audioURL: string
+  audio: HTMLAudioElement
   durationS: number
   caption: string
 }
 
-function Clip({clip}: {clip: clip}) {
-  const audioRef = useRef<HTMLAudioElement>(null)
-
-  const handleOnClick = () => {
-    if (audioRef.current === null) {
-      return
-    }
-    if (audioRef.current.paused) {
-      audioRef.current.play()
-    } else {
-      audioRef.current.pause()
-    }
-  }
-
+function Clip({clip, handleSelectClip}: {clip: clip, handleSelectClip: (clip: clip) => void}) {
   return (
-    <div onClick={handleOnClick}>
-      <audio src={clip.audioURL} ref={audioRef} />
+    <div onClick={()=>{handleSelectClip(clip)}}>
       <div style={{color: clip.char.color}} >
         <span>{clip.char.name} {clip.durationS}s {clip.caption}</span>
       </div>
@@ -89,11 +74,20 @@ function Clip({clip}: {clip: clip}) {
   )
 }
 
-function Timeline({clips}: {clips: clip[]}) {
+type TimelineProps = {
+  clips: clip[]
+  selectedClipID: string
+  handleSelectClip: (clip: clip) => void
+}
+
+function Timeline({clips, selectedClipID, handleSelectClip}: TimelineProps) {
   return (
     <div>
       {clips.map((clip) => (
-        <Clip key={clip.id} clip={clip} />
+        <div key={clip.id}  style={{display: 'flex'}}>
+          <span>{selectedClipID === clip.id ? '●' : ''}</span>
+          <Clip clip={clip} handleSelectClip={handleSelectClip} />
+        </div>
       ))}
     </div>
   )
@@ -132,14 +126,17 @@ function Char({char, stream, handleAddClip, recordingCharID, setRecordingCharID}
     const blob = new Blob(audioChunksRef.current)
     audioChunksRef.current = []
 
+    const audio = new Audio(URL.createObjectURL(blob))
+
     const duration = Math.floor((Date.now() - recordStartTimestampRef.current ) / 1000)
     recordStartTimestampRef.current = 0
 
+    const id = crypto.randomUUID()
+
     const clip: clip = {
-      id: Math.random().toString(),
-      idx: 0,
+      id: id,
       char: char,
-      audioURL: URL.createObjectURL(blob),
+      audio: audio,
       durationS: duration,
       caption: 'Hello',
     }
@@ -215,28 +212,63 @@ function CharPad({chars, stream, handleAddClip}: CharPadProps) {
   )
 }
 
-function ControlPad() {
+type ControlPadProps = {
+  clips: clip[]
+  selectedClipID: string
+  handleSelectClip: (clip: clip) => void
+}
+
+function ControlPad({clips, selectedClipID, handleSelectClip}: ControlPadProps) {
+  const handleSelectNextClip = () => {
+    const clip = clips.find((clip) => clip.id === selectedClipID)
+    if (clip === undefined) {
+      return
+    }
+    const nextClip = clips[clips.indexOf(clip) + 1]
+    if (nextClip === undefined) {
+      return
+    }
+    handleSelectClip(nextClip)
+  }
+
+  const handleSelectPrevClip = () => {
+    const clip = clips.find((clip) => clip.id === selectedClipID)
+    if (clip === undefined) {
+      return
+    }
+    const prevClip = clips[clips.indexOf(clip) - 1]
+    if (prevClip === undefined) {
+      return
+    }
+    handleSelectClip(prevClip)
+  }
+
   return (
     <div>
-      <button>◀</button>
-      <button>⏹</button>
-      <button>▶</button>
+      <button type="button" onClick={handleSelectPrevClip}>◀</button>
+      <button type="button">⏹</button>
+      <button type="button" onClick={handleSelectNextClip}>▶</button>
     </div>
   )
 }
 
 function Recorder({stream}: {stream: MediaStream}) {
   const [clips, setClips] = useState<clip[]>([])
+  const [selectedClipID, setSelectedClipID] = useState<string>('')
 
   function handleAddClip(clip: clip) {
     setClips((prev) => [...prev, clip])
   }
 
+  function handleSelectClip(clip: clip) {
+    setSelectedClipID(clip.id)
+  }
+
   return (
     <div>
-      <Timeline clips={clips} />
+      <Timeline clips={clips} selectedClipID={selectedClipID} handleSelectClip={handleSelectClip} />
       <CharPad chars={dummyChars} stream={stream} handleAddClip={handleAddClip} />
-      <ControlPad />
+      <ControlPad clips={clips} selectedClipID={selectedClipID} handleSelectClip={handleSelectClip} />
     </div>
   )
 }
