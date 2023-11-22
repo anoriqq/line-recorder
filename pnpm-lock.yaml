@@ -31,6 +31,9 @@ devDependencies:
   '@babel/preset-typescript':
     specifier: ^7.23.3
     version: 7.23.3(@babel/core@7.23.3)
+  '@jest/globals':
+    specifier: ^29.7.0
+    version: 29.7.0
   '@remix-run/dev':
     specifier: ^2.2.0
     version: 2.2.0(typescript@5.2.2)
