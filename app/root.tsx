@@ -221,6 +221,9 @@ function ControlPad({clips, status, setStatus, selectedClipID, setSelectClipID}:
       return
     }
     const nextClipID = clips.getNextClipID(selectedClipID)
+    if (nextClipID === undefined) {
+      return
+    }
     setSelectClipID(nextClipID)
   }
 
@@ -229,6 +232,9 @@ function ControlPad({clips, status, setStatus, selectedClipID, setSelectClipID}:
       return
     }
     const prevClipID = clips.getPrevClipID(selectedClipID)
+    if (prevClipID === undefined) {
+      return
+    }
     setSelectClipID(prevClipID)
   }
 
