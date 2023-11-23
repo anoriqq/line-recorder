@@ -10,6 +10,8 @@ import {
   useState,
 } from "react";
 
+import { char, clip, Clips } from './domains/clips.client'
+
 export const meta: MetaFunction = () => {
   return [
     { title: "Line Recorder" },
@@ -35,16 +37,9 @@ function Welcome({onClick}: {onClick: () => void}) {
       <h1>Line Recorder</h1>
       <p>This app is record your voice.</p>
       <p>Click the button below to get mic permission.</p>
-      <button onClick={onClick}>Get Mic Permission</button>
+      <button type="button" onClick={onClick}>Get Mic Permission</button>
     </div>
   )
-}
-
-type char = {
-  id: string
-  idx: number
-  name: string
-  color: string
 }
 
 const dummyChars: char[] = [
@@ -55,14 +50,6 @@ const dummyChars: char[] = [
   { id: '5', idx: 4, name: 'moon', color: '#0000CD' },
   { id: '6', idx: 5, name: 'james', color: '#006400' },
 ]
-
-type clip = {
-  id: string
-  char: char
-  audio: HTMLAudioElement
-  durationS: number
-  caption: string
-}
 
 function Clip({clip, handleSelectClip}: {clip: clip, handleSelectClip: (clip: clip) => void}) {
   return (
@@ -213,62 +200,65 @@ function CharPad({chars, stream, handleAddClip}: CharPadProps) {
 }
 
 type ControlPadProps = {
-  clips: clip[]
-  selectedClipID: string
-  handleSelectClip: (clip: clip) => void
+  clips: Clips
+  status: Status
+  setStatus: (status: Status) => void
+  selectedClipID: string|undefined
+  setSelectClipID: (clipID: string|undefined) => void
 }
 
-function ControlPad({clips, selectedClipID, handleSelectClip}: ControlPadProps) {
-  const handleSelectNextClip = () => {
-    const clip = clips.find((clip) => clip.id === selectedClipID)
-    if (clip === undefined) {
-      return
+function ControlPad({clips, status, setStatus, selectedClipID, setSelectClipID}: ControlPadProps) {
+  const handlePlayPause = () => {
+    if (status === 'ready') {
+      setStatus('playing')
+    } else if (status === 'playing') {
+      setStatus('ready')
     }
-    const nextClip = clips[clips.indexOf(clip) + 1]
-    if (nextClip === undefined) {
-      return
-    }
-    handleSelectClip(nextClip)
   }
 
-  const handleSelectPrevClip = () => {
-    const clip = clips.find((clip) => clip.id === selectedClipID)
-    if (clip === undefined) {
+  const handleNext = () => {
+    if (selectedClipID === undefined) {
       return
     }
-    const prevClip = clips[clips.indexOf(clip) - 1]
-    if (prevClip === undefined) {
+    const nextClipID = clips.getNextClipID(selectedClipID)
+    setSelectClipID(nextClipID)
+  }
+
+  const handlePrev = () => {
+    if (selectedClipID === undefined) {
       return
     }
-    handleSelectClip(prevClip)
+    const prevClipID = clips.getPrevClipID(selectedClipID)
+    setSelectClipID(prevClipID)
   }
 
   return (
     <div>
-      <button type="button" onClick={handleSelectPrevClip}>◀</button>
-      <button type="button">⏹</button>
-      <button type="button" onClick={handleSelectNextClip}>▶</button>
+      <button type="button" onClick={handleNext}>◁</button>
+      <button type="button" onClick={handlePlayPause}>{status === 'ready' ? '■' : '▶'}</button>
+      <button type="button" onClick={handlePrev}>▷</button>
     </div>
   )
 }
 
+type Status = 'ready' | 'recording' | 'playing'
+
 function Recorder({stream}: {stream: MediaStream}) {
-  const [clips, setClips] = useState<clip[]>([])
-  const [selectedClipID, setSelectedClipID] = useState<string>('')
-
-  function handleAddClip(clip: clip) {
-    setClips((prev) => [...prev, clip])
-  }
-
-  function handleSelectClip(clip: clip) {
-    setSelectedClipID(clip.id)
-  }
+  const [clips, _] = useState<Clips>(new Clips())
+  const [selectedClipID, setSelectedClipID] = useState<string|undefined>(undefined)
+  const [status, setStatus] = useState<Status>('ready')
 
   return (
     <div>
-      <Timeline clips={clips} selectedClipID={selectedClipID} handleSelectClip={handleSelectClip} />
-      <CharPad chars={dummyChars} stream={stream} handleAddClip={handleAddClip} />
-      <ControlPad clips={clips} selectedClipID={selectedClipID} handleSelectClip={handleSelectClip} />
+      <Timeline clips={clips} />
+      <CharPad clips={clips} chars={dummyChars} stream={stream} />
+      <ControlPad
+        clips={clips}
+        status={status}
+        setStatus={setStatus}
+        selectedClipID={selectedClipID}
+        setSelectClipID={setSelectedClipID}
+      />
     </div>
   )
 }
