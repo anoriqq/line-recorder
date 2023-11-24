@@ -10,7 +10,112 @@ import {
   useState,
 } from "react";
 
-import { char, clip, Clips } from './domains/clips.client'
+import { char, clip } from './domains/clips.client'
+import { create } from 'zustand'
+
+interface State {
+  clips: Set<clip>
+  selectedClipID: string|undefined
+  status: Status
+}
+
+interface Action {
+  addClip: (clips: clip) => void
+  setSelectClipID: (clipID: string|undefined) => void
+  setStatus: (status: Status) => void
+  play: () => void
+  pause: () => void
+  getNextClipID: (clipID: string|undefined) => string|undefined
+  getPrevClipID: (clipID: string|undefined) => string|undefined
+}
+
+const useStore = create<State&Action>((set, get) => ({
+  clips: new Set(),
+  selectedClipID: undefined,
+  status: 'ready',
+  addClip: (clip: clip) => set((prev) => ({
+    clips: new Set(prev.clips).add(clip)
+  })),
+  setSelectClipID: (clipID: string|undefined) => set((_) => ({
+    selectedClipID: clipID
+  })),
+  setStatus: (status: Status) => set((_) => ({
+    status: status
+  })),
+  play: () => {
+    let selectedClipID = get().selectedClipID
+    if (selectedClipID === undefined) {
+      selectedClipID = get().getNextClipID(undefined)
+    }
+    const clip = Array.from(get().clips).find(c => c.id === selectedClipID)
+    if (clip === undefined) {
+      console.error('clip not found')
+      return
+    }
+    get().setSelectClipID(clip.id)
+    clip.audio.addEventListener('ended', () => {
+      const nextClipID = get().getNextClipID(clip.id)
+      if (nextClipID === undefined) {
+        get().setStatus('ready')
+        return
+      }
+      get().setSelectClipID(nextClipID)
+      get().play()
+    })
+    clip.audio.play()
+    get().setStatus('playing')
+  },
+  pause: () => {
+    const selectedClipID = get().selectedClipID
+    if (selectedClipID === undefined) {
+      return
+    }
+    const clip = Array.from(get().clips).find(c => c.id === selectedClipID)
+    if (clip === undefined) {
+      console.error('clip not found')
+      return
+    }
+    clip.audio.pause()
+    get().setStatus('ready')
+  },
+  getNextClipID: (clipID: string|undefined) => {
+    const prev = Array.from(get().clips)
+
+    if (clipID === undefined) {
+      if (prev.length === 0) {
+        return undefined;
+      }
+      return prev[0].id;
+    }
+
+    const idx = prev.findIndex(c => c.id === clipID);
+    if (idx < 0) {
+      return undefined;
+    }
+    if (idx === prev.length - 1) {
+      return undefined;
+    }
+    const nextClip = prev[idx + 1];
+    return nextClip.id;
+  },
+  getPrevClipID: (clipID: string|undefined) => {
+    const prev = Array.from(get().clips)
+
+    if (clipID === undefined) {
+      return prev[prev.length - 1].id;
+    }
+
+    const idx = prev.findIndex(c => c.id === clipID);
+    if (idx < 0) {
+      return undefined;
+    }
+    if (idx === 0) {
+      return undefined;
+    }
+    const prevClip = prev[idx - 1];
+    return prevClip.id;
+  },
+}))
 
 export const meta: MetaFunction = () => {
   return [
@@ -61,19 +166,17 @@ function Clip({clip, handleSelectClip}: {clip: clip, handleSelectClip: (clip: cl
   )
 }
 
-type TimelineProps = {
-  clips: clip[]
-  selectedClipID: string
-  handleSelectClip: (clip: clip) => void
-}
+function Timeline() {
+  const clips = useStore((state) => Array.from(state.clips))
+  const selectedClipID = useStore((state) => state.selectedClipID)
+  const setSelectClipID = useStore((state) => state.setSelectClipID)
 
-function Timeline({clips, selectedClipID, handleSelectClip}: TimelineProps) {
   return (
     <div>
       {clips.map((clip) => (
         <div key={clip.id}  style={{display: 'flex'}}>
           <span>{selectedClipID === clip.id ? '●' : ''}</span>
-          <Clip clip={clip} handleSelectClip={handleSelectClip} />
+          <Clip clip={clip} handleSelectClip={(_: clip)=>{setSelectClipID(clip.id)}}/>
         </div>
       ))}
     </div>
@@ -83,14 +186,15 @@ function Timeline({clips, selectedClipID, handleSelectClip}: TimelineProps) {
 type CharProps = {
   char: char
   stream: MediaStream
-  handleAddClip: (clip: clip) => void
   recordingCharID: string
   setRecordingCharID: (recordingCarID: string) => void
 }
 
-function Char({char, stream, handleAddClip, recordingCharID, setRecordingCharID}: CharProps) {
+function Char({char, stream, recordingCharID, setRecordingCharID}: CharProps) {
   const mediaRecorderRef = useRef<MediaRecorder|null>(null)
   const audioChunksRef = useRef<Blob[]>([])
+
+  const addClip = useStore(state => state.addClip)
 
   // HTMLAudioElement.duration から値が取れないケースがあるので自前で計算する
   const recordStartTimestampRef = useRef<number>(0) 
@@ -127,7 +231,7 @@ function Char({char, stream, handleAddClip, recordingCharID, setRecordingCharID}
       durationS: duration,
       caption: 'Hello',
     }
-    handleAddClip(clip)
+    addClip(clip)
   }
 
   const handleClick = () => {
@@ -177,10 +281,9 @@ function Char({char, stream, handleAddClip, recordingCharID, setRecordingCharID}
 type CharPadProps = {
   chars: char[]
   stream: MediaStream
-  handleAddClip: (clip: clip) => void
 }
 
-function CharPad({chars, stream, handleAddClip}: CharPadProps) {
+function CharPad({chars, stream}: CharPadProps) {
   const [recordingCharID, setRecordingCharID] = useState<string>('')
 
   return (
@@ -190,7 +293,6 @@ function CharPad({chars, stream, handleAddClip}: CharPadProps) {
           key={char.id}
           char={char}
           stream={stream}
-          handleAddClip={handleAddClip}
           recordingCharID={recordingCharID}
           setRecordingCharID={setRecordingCharID}
         />
@@ -199,20 +301,20 @@ function CharPad({chars, stream, handleAddClip}: CharPadProps) {
   )
 }
 
-type ControlPadProps = {
-  clips: Clips
-  status: Status
-  setStatus: (status: Status) => void
-  selectedClipID: string|undefined
-  setSelectClipID: (clipID: string|undefined) => void
-}
+function ControlPad() {
+  const selectedClipID = useStore((state) => state.selectedClipID)
+  const setSelectClipID = useStore((state) => state.setSelectClipID)
+  const status = useStore((state) => state.status)
+  const play = useStore((state) => state.play)
+  const pause = useStore((state) => state.pause)
+  const getNextClipID = useStore((state) => state.getNextClipID)
+  const getPrevClipID = useStore((state) => state.getPrevClipID)
 
-function ControlPad({clips, status, setStatus, selectedClipID, setSelectClipID}: ControlPadProps) {
-  const handlePlayPause = () => {
+  const handlePlayPause = async () => {
     if (status === 'ready') {
-      setStatus('playing')
+      play()
     } else if (status === 'playing') {
-      setStatus('ready')
+      pause()
     }
   }
 
@@ -220,7 +322,7 @@ function ControlPad({clips, status, setStatus, selectedClipID, setSelectClipID}:
     if (selectedClipID === undefined) {
       return
     }
-    const nextClipID = clips.getNextClipID(selectedClipID)
+    const nextClipID = getNextClipID(selectedClipID)
     if (nextClipID === undefined) {
       return
     }
@@ -231,7 +333,7 @@ function ControlPad({clips, status, setStatus, selectedClipID, setSelectClipID}:
     if (selectedClipID === undefined) {
       return
     }
-    const prevClipID = clips.getPrevClipID(selectedClipID)
+    const prevClipID = getPrevClipID(selectedClipID)
     if (prevClipID === undefined) {
       return
     }
@@ -241,7 +343,7 @@ function ControlPad({clips, status, setStatus, selectedClipID, setSelectClipID}:
   return (
     <div>
       <button type="button" onClick={handleNext}>◁</button>
-      <button type="button" onClick={handlePlayPause}>{status === 'ready' ? '■' : '▶'}</button>
+      <button type="button" onClick={handlePlayPause}>{status === 'playing' ? '■' : '▶' }</button>
       <button type="button" onClick={handlePrev}>▷</button>
     </div>
   )
@@ -250,21 +352,14 @@ function ControlPad({clips, status, setStatus, selectedClipID, setSelectClipID}:
 type Status = 'ready' | 'recording' | 'playing'
 
 function Recorder({stream}: {stream: MediaStream}) {
-  const [clips, _] = useState<Clips>(new Clips())
-  const [selectedClipID, setSelectedClipID] = useState<string|undefined>(undefined)
-  const [status, setStatus] = useState<Status>('ready')
-
   return (
     <div>
-      <Timeline clips={clips} />
-      <CharPad clips={clips} chars={dummyChars} stream={stream} />
-      <ControlPad
-        clips={clips}
-        status={status}
-        setStatus={setStatus}
-        selectedClipID={selectedClipID}
-        setSelectClipID={setSelectedClipID}
+      <Timeline />
+      <CharPad
+        chars={dummyChars}
+        stream={stream}
       />
+      <ControlPad />
     </div>
   )
 }
