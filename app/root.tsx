@@ -39,8 +39,8 @@ interface Action {
   setStatus: (status: Status) => void
   play: () => void
   pause: () => void
-  getNextClipID: (clipID: string|undefined) => string|undefined
-  getPrevClipID: (clipID: string|undefined) => string|undefined
+  getNextClipID: (clipID: string) => string|undefined
+  getPrevClipID: (clipID: string) => string|undefined
 }
 
 const useStore = create<State&Action>((set, get) => ({
@@ -59,7 +59,12 @@ const useStore = create<State&Action>((set, get) => ({
   play: () => {
     let selectedClipID = get().selectedClipID
     if (selectedClipID === undefined) {
-      selectedClipID = get().getNextClipID(undefined)
+      const prev = Array.from(get().clips)
+      if (prev.length === 0) {
+        console.error('no clips')
+        return
+      }
+      selectedClipID = prev[0].id
     }
     const clip = Array.from(get().clips).find(c => c.id === selectedClipID)
     if (clip === undefined) {
@@ -92,14 +97,10 @@ const useStore = create<State&Action>((set, get) => ({
     clip.audio.pause()
     get().setStatus('ready')
   },
-  getNextClipID: (clipID: string|undefined) => {
+  getNextClipID: (clipID: string) => {
     const prev = Array.from(get().clips)
-
-    if (clipID === undefined) {
-      if (prev.length === 0) {
-        return undefined;
-      }
-      return prev[0].id;
+    if (prev.length === 0) {
+      return undefined;
     }
 
     const idx = prev.findIndex(c => c.id === clipID);
@@ -109,14 +110,14 @@ const useStore = create<State&Action>((set, get) => ({
     if (idx === prev.length - 1) {
       return undefined;
     }
+
     const nextClip = prev[idx + 1];
     return nextClip.id;
   },
-  getPrevClipID: (clipID: string|undefined) => {
+  getPrevClipID: (clipID: string) => {
     const prev = Array.from(get().clips)
-
-    if (clipID === undefined) {
-      return prev[prev.length - 1].id;
+    if (prev.length === 0) {
+      return undefined;
     }
 
     const idx = prev.findIndex(c => c.id === clipID);
@@ -126,6 +127,7 @@ const useStore = create<State&Action>((set, get) => ({
     if (idx === 0) {
       return undefined;
     }
+
     const prevClip = prev[idx - 1];
     return prevClip.id;
   },
@@ -316,6 +318,7 @@ function CharPad({chars, stream}: CharPadProps) {
 }
 
 function ControlPad() {
+  const clips = useStore((state) => Array.from(state.clips))
   const selectedClipID = useStore((state) => state.selectedClipID)
   const setSelectClipID = useStore((state) => state.setSelectClipID)
   const status = useStore((state) => state.status)
@@ -333,6 +336,10 @@ function ControlPad() {
   }
 
   const handleNext = () => {
+    if (status === 'playing') {
+      return
+    }
+
     if (selectedClipID === undefined) {
       return
     }
@@ -344,6 +351,10 @@ function ControlPad() {
   }
 
   const handlePrev = () => {
+    if (status === 'playing') {
+      return
+    }
+
     if (selectedClipID === undefined) {
       return
     }
@@ -356,9 +367,21 @@ function ControlPad() {
 
   return (
     <div>
-      <button type="button" onClick={handleNext}>◁</button>
-      <button type="button" onClick={handlePlayPause}>{status === 'playing' ? '■' : '▶' }</button>
-      <button type="button" onClick={handlePrev}>▷</button>
+      <button
+        type="button"
+        onClick={handleNext}
+        disabled={!(selectedClipID !== undefined && getNextClipID(selectedClipID) !== undefined)}>◁</button>
+      <button
+        type="button"
+        onClick={handlePlayPause}
+        disabled={clips.length === 0}
+      >
+        {status === 'playing' ? '■' : '▶' }
+      </button>
+      <button
+        type="button"
+        onClick={handlePrev}
+        disabled={!(selectedClipID !== undefined && getPrevClipID(selectedClipID) !== undefined)}>▷</button>
     </div>
   )
 }
