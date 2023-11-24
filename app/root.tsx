@@ -10,8 +10,22 @@ import {
   useState,
 } from "react";
 
-import { char, clip } from './domains/clips.client'
 import { create } from 'zustand'
+
+export type char = {
+  id: string
+  idx: number
+  name: string
+  color: string
+}
+
+export type clip = {
+  id: string
+  char: char
+  audio: HTMLAudioElement
+  durationS: number
+  caption: string
+}
 
 interface State {
   clips: Set<clip>
