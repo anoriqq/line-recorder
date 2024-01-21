@@ -3,8 +3,8 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
-    "dev": "remix dev -c \"npm run dev:server\"",
-    "dev:server": "tsx watch --clear-screen=false --ignore 'app/**' --ignore 'build/**' --ignore 'node_modules/**' --inspect ./server.ts",
+    "dev": "remix dev --manual -c \"npm run start\"",
+    "start": "wrangler pages dev --compatibility-date=2024-01-21 ./public",
     "test": "jest",
     "typecheck": "tsc"
   },
