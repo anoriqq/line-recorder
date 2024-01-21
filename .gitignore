@@ -145,7 +145,6 @@ dist
 
 /build
 /public/build
-/cert
 
 /.wrangler
 /functions
