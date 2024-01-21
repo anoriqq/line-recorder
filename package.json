@@ -23,6 +23,7 @@
   "devDependencies": {
     "@babel/preset-typescript": "^7.23.3",
     "@jest/globals": "^29.7.0",
+    "@remix-run/cloudflare-pages": "^2.5.1",
     "@remix-run/dev": "^2.2.0",
     "@types/express": "^4.17.21",
     "@types/jest": "^29.5.10",
