@@ -22,6 +22,7 @@
   },
   "devDependencies": {
     "@babel/preset-typescript": "^7.23.3",
+    "@cloudflare/workers-types": "^4.20240117.0",
     "@jest/globals": "^29.7.0",
     "@remix-run/cloudflare-pages": "^2.5.1",
     "@remix-run/dev": "^2.2.0",
